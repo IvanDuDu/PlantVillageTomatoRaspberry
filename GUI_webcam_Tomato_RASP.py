@@ -13,17 +13,16 @@ import numpy as np
 import cv2
 from tflite_runtime.interpreter import Interpreter
 
-# Clase principal que contendrá todos los llamados
+
 class App:
     def __init__(self, window, window_title, video_source=0):
         self.window = window
         self.window.title(window_title)
         self.video_source = video_source
 
-        # Activa webcam
         self.vid = MyVideoCapture(self.video_source)
 
-        # tomamos características de frame para construir panel
+    
         self.canvas = tkinter.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack(side = LEFT)
         
@@ -33,7 +32,7 @@ class App:
         self.canvas2 = tkinter.Canvas(window, width = 512, height = 512)
         self.canvas2.pack()
 
-        # Botón para tomar snapshots
+     
         icon1=PIL.ImageTk.PhotoImage(file="snapshot.png")
         self.btn_snapshot=tkinter.Button(window, image=icon1, width=64, command=self.snapshot)
         self.btn_snapshot.pack(side = LEFT)
@@ -58,9 +57,8 @@ class App:
         self.fontScale              = 1
         self.fontColor              = (228,200,50)
         self.lineType               = 2
-        
-        # Después de ser llamado 1 ves, el método esperará un delay y repetirá el proceso
-        self.delay = 1 # en milisegundos
+       
+        self.delay = 1
         self.proc = 0
         self.update()
 
@@ -76,18 +74,18 @@ class App:
         self.proc = 3
 
     def update(self):
-        # toma nuevo frame de webcam
+ 
         ret, frame = self.vid.get_frame()
         frame = cv2.rectangle(frame, (self.xroi,self.yroi), (self.xroi+224,self.yroi+224), (255, 0, 0),2)
         
         if ret:
-            if self.proc == 1: # Caso snapshot
+            if self.proc == 1:
                 self.ROI = frame[self.yroi:self.yroi+224,self.xroi:self.xroi+224,:]
                 self.photo2 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.ROI))
                 self.canvas2.create_image(0, 0, image = self.photo2, anchor = tkinter.NW)
                 self.proc = 0
-            elif self.proc == 2: #Caso prediction
-#                self.ROI = cv2.cvtColor(self.ROI, cv2.COLOR_RGB2BGR)
+            elif self.proc == 2:
+#            
                 self.IMG = np.expand_dims(self.ROI, axis=0)
                 self.IMG=np.float32(self.IMG)/255
                 self.interpreter.set_tensor(self.input_details[0]['index'], self.IMG)
@@ -96,7 +94,7 @@ class App:
                 answer = np.array(answer).ravel()
                 x = np.argmax(answer)
                 self.pred = self.objects[x]
-                if np.max(answer)>0.95: # Nivel de confianza para la deteccion [entre -1 y 1]
+                if np.max(answer)>0.95:
                     cv2.putText(self.ROI,self.objects[x], 
                     self.bottomLeftCornerOfText, 
                     self.font, 
@@ -130,12 +128,12 @@ class App:
 
 class MyVideoCapture:
     def __init__(self, video_source=1):
-        # Se prueba fuente de video
+
         self.vid = cv2.VideoCapture(video_source)
         if not self.vid.isOpened():
             raise ValueError("No fue posible encontrar objeto de video", video_source)
 
-        # Tomamos dimensiones de video
+       
         self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
         
@@ -144,17 +142,18 @@ class MyVideoCapture:
         if self.vid.isOpened():
             ret, frame = self.vid.read()
             if ret:
-                # Si existe captura de webcam, convierte de BGR a RGB
+             
                 return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             else:
                 return (ret, None)
         else:
             return (ret, None)
 
-    # Al cerrar la ventana debe desactivar la webcam
+    
     def __del__(self):
         if self.vid.isOpened():
             self.vid.release()
 
-# Crea ventana y pasa los parámetros para su creación
+
+
 App(tkinter.Tk(), "PlantVillage Tomato disease classifier")
